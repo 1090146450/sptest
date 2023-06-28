@@ -66,9 +66,39 @@ class AutoVideoClips:
             [VideoFileClip(self.ta).subclip((0), (1)), videoList[0], videoList[1], videoList[2], videoList[3],
              videoList[4]])
 
-    def Run(self):
+    def czsp(self, au) -> VideoFileClip:
+        """对视频进行抽帧处理"""
+        x, y = 0, 0
+        aulist = []
+        for i in range(int(au.duration) - 2):
+            x = y
+            y = i + random()
+            aulist.append(au.subclip((x), (y + 0.01)))
+            y = y + 0.01
+        print("视频抽帧成功")
+        return concatenate_videoclips(aulist)
+
+    def onevideo(self, video):
+        vidolen = video.duration  # 获取视频长度
+        print("获取长度:",vidolen)
+        x, y = 0, 0
+        while True:
+            x = x + random.randint(10, 50)
+            y = x + 300
+            if y > vidolen:
+                print("视频长度已经切割完成")
+                break
+            else:
+                print("开始切割并保存")
+                video.subclip((x), (y)).write_videofile("input" + str(x) + ".mp4")
+
+    def run(self):
         transitionList = []  # 转场视频
         print("开始切割视频")
+        x = input("切割方法：1、单独切割 2、去重切割")
+        if int(x) == 1:
+            self.onevideo(self.au)
+            return 0
         auall = self.Slicing([])  # 切割视频，返回切割完视频列表
         for i in range(0, 10):  # 找当前文件夹下10个以内视频
             if os.path.isfile(str(i) + ".mp4"):
@@ -80,6 +110,8 @@ class AutoVideoClips:
         print("修改视频帧率等操作")
         video = video.set_fps(60)
         video = video.resize((720, 1280))
+        print("开始抽帧处理")
+        video = self.czsp(video)
         print("开始变速视频")
         self.Shifting(video)
 
@@ -94,7 +126,7 @@ class DyVideoClips:
 
     def Shifting(self, au):  # 变速视频
         codec = 'libx264'  # 使用H.264编解码器
-        # bitrate = '5000k'  # 设置比特率为5000 kbps
+        bitrate = '5000k'  # 设置比特率为5000 kbps
         au = au.set_fps(60)
         au = vfx.colorx(au, 0.8)  # 将视频的颜色饱和度减半
         new_au = au.fl_time(lambda t: self.play_speed * t, apply_to=['mask', 'audio'])  # 对视频和音频应用时间转换，
@@ -107,7 +139,7 @@ class DyVideoClips:
         aulist = []
         for i in range(int(au.duration) - 2):
             x = y
-            y = i + random()
+            y = i + random.random()
             aulist.append(au.subclip((x), (y + 0.01)))
             y = y + 0.01
         print("视频抽帧成功")
@@ -121,13 +153,17 @@ class DyVideoClips:
         au.fadein(1)
         print("视频反转")
         au = au.fx(vfx.mirror_x)
+        au = self.czsp(au)
         self.Shifting(au)
 
 
 intp_name = './input.mp4'
 outp_name = './outp.mp4'
 play_speed = 1.15
-avc = AutoVideoClips(intp_name, outp_name, play_speed)
-# avc.Run()
-avc = DyVideoClips(intp_name, outp_name)
+x = input("请输入:1、抖音短视频处理")
+if int(x) == 1:
+    avc = DyVideoClips(intp_name, outp_name)
+else:
+    avc = AutoVideoClips(intp_name, outp_name, play_speed)
+
 avc.run()
