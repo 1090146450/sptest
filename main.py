@@ -1,14 +1,16 @@
 import random
 
+import cv2
 from moviepy.editor import *
 
 
 class AutoVideoClips:
-    def __init__(self, input_name, outp_name, play_speed):
+    def __init__(self, input_name, outp_name, play_speed, ta="1.mp4"):
         self.input_name = input_name  # 输入视频
         self.outp_name = outp_name  # 输出视频
         self.play_speed = play_speed  # 变速
         self.au = VideoFileClip(self.input_name)  # 创建了一个VideoFileClip对象，
+        self.ta = ta
 
     def Slicing(self, videoLen) -> list:  # 切割视频
         if not isinstance(videoLen, list):
@@ -38,7 +40,7 @@ class AutoVideoClips:
         bitrate = '5000k'  # 设置比特率为5000 kbps
         new_au = au.fl_time(lambda t: self.play_speed * t, apply_to=['mask', 'audio'])  # 对视频和音频应用时间转换，
         new_au = new_au.set_duration(au.duration / self.play_speed)
-        new_au.write_videofile(outp_name, codec=codec, bitrate=bitrate)  # 设置修改后剪辑的持续时间，并将其写入新的视频文件。
+        new_au.write_videofile(self.outp_name, codec=codec, bitrate=bitrate)  # 设置修改后剪辑的持续时间，并将其写入新的视频文件。
 
     def add_fade_in_out(self, clips, fade_duration=1) -> list:
         """添加转场视频"""
@@ -61,7 +63,7 @@ class AutoVideoClips:
         print(len(transition1), len(videoList))
         print("开始处理转场效果")
         return concatenate_videoclips(
-            [videoList[0], videoList[1], videoList[2], videoList[3],
+            [VideoFileClip(self.ta).subclip((0), (1)), videoList[0], videoList[1], videoList[2], videoList[3],
              videoList[4]])
 
     def Run(self):
@@ -82,8 +84,50 @@ class AutoVideoClips:
         self.Shifting(video)
 
 
+class DyVideoClips:
+    """抖音视频去重"""
+
+    def __init__(self, input_name, outp_name):
+        self.input_name = input_name  # 输入视频
+        self.outp_name = outp_name  # 输出视频
+        self.play_speed = 1.2
+
+    def Shifting(self, au):  # 变速视频
+        codec = 'libx264'  # 使用H.264编解码器
+        # bitrate = '5000k'  # 设置比特率为5000 kbps
+        au = au.set_fps(60)
+        au = vfx.colorx(au, 0.8)  # 将视频的颜色饱和度减半
+        new_au = au.fl_time(lambda t: self.play_speed * t, apply_to=['mask', 'audio'])  # 对视频和音频应用时间转换，
+        new_au = new_au.set_duration(au.duration / self.play_speed)
+        new_au.write_videofile(self.outp_name, codec=codec)  # 设置修改后剪辑的持续时间，并将其写入新的视频文件。
+
+    def czsp(self, au) -> VideoFileClip:
+        """对视频进行抽帧处理"""
+        x, y = 0, 0
+        aulist = []
+        for i in range(int(au.duration) - 2):
+            x = y
+            y = i + random()
+            aulist.append(au.subclip((x), (y + 0.01)))
+            y = y + 0.01
+        print("视频抽帧成功")
+        return concatenate_videoclips(aulist)
+
+    def run(self):
+        print("打开视频")
+        au = VideoFileClip(self.input_name)
+        print("切割视频")
+        au = au.subclip(0.5, )
+        au.fadein(1)
+        print("视频反转")
+        au = au.fx(vfx.mirror_x)
+        self.Shifting(au)
+
+
 intp_name = './input.mp4'
 outp_name = './outp.mp4'
-play_speed = 1.2
+play_speed = 1.15
 avc = AutoVideoClips(intp_name, outp_name, play_speed)
-avc.Run()
+# avc.Run()
+avc = DyVideoClips(intp_name, outp_name)
+avc.run()
