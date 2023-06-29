@@ -10,7 +10,7 @@ class AutoVideoClips:
         self.outp_name = outp_name  # 输出视频
         self.play_speed = play_speed  # 变速
         self.au = VideoFileClip(self.input_name)  # 创建了一个VideoFileClip对象，
-        self.ta = ta
+        self.ta = VideoFileClip(ta)
 
     def Slicing(self, videoLen) -> list:  # 切割视频
         if not isinstance(videoLen, list):
@@ -63,16 +63,16 @@ class AutoVideoClips:
         print(len(transition1), len(videoList))
         print("开始处理转场效果")
         return concatenate_videoclips(
-            [VideoFileClip(self.ta).subclip((0), (1)), videoList[0], videoList[1], videoList[2], videoList[3],
+            [self.ta.subclip((0), (1)), videoList[0], videoList[1], videoList[2], videoList[3],
              videoList[4]])
 
     def czsp(self, au) -> VideoFileClip:
         """对视频进行抽帧处理"""
         x, y = 0, 0
         aulist = []
-        for i in range(int(au.duration) - 2):
+        for i in range(int(au.duration) - 100):
             x = y
-            y = i + random()
+            y = i + random.random()
             aulist.append(au.subclip((x), (y + 0.01)))
             y = y + 0.01
         print("视频抽帧成功")
@@ -80,7 +80,7 @@ class AutoVideoClips:
 
     def onevideo(self, video):
         vidolen = video.duration  # 获取视频长度
-        print("获取长度:",vidolen)
+        print("获取长度:", vidolen)
         x, y = 0, 0
         while True:
             x = x + random.randint(10, 50)
